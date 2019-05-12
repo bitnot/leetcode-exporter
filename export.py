@@ -11,6 +11,7 @@ COOKIES = open('cookies.txt', 'r').read().strip().replace('cookie: ', '', 1)
 # Change output dir if you like
 LEETCODE_DIR = '../leetcode-solutions'
 SUBMISSIONS_URL = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
+PROBLEM_URL = 'https://leetcode.com/problems/{}/'
 GRAPHQL_URL = 'https://leetcode.com/graphql'
 THROTTLE_SECONDS = 1
 EXTENSIONS = {
@@ -37,17 +38,11 @@ EXTENSIONS = {
 }
 SLUG_RE = re.compile(r"[^-0-9a-z ]", re.IGNORECASE)
 DESCRIPTION_TEMPLATE = Template("""
-<!doctype html>
-<html>
-    <head>
-        <title>${difficulty}: ${title}</title>
-    <head>
-    <body>
-        <h1>${title} (${difficulty})</h1>
-        <a href='https://leetcode.com/${url}'>View on LeetCode</a></br></hr>
-        ${content}
-    </body>
-</html>
+${difficulty}: ${title}
+=======================
+[View on LeetCode](${problem_url})
+</hr>
+${content}
 """)
 
 
@@ -96,7 +91,8 @@ def add_description(submission_json):
     response = requests.post(GRAPHQL_URL, json=question_data(
         slug), headers={'Cookie': COOKIES})
     json_response = response.json()
-    return {**submission_json, **json_response['data']['question'], 'slug': slug}
+    problem_url = PROBLEM_URL.format(slug)
+    return {**submission_json, **json_response['data']['question'], 'slug': slug, 'problem_url': problem_url}
 
 
 def is_accepted(submission_json):
@@ -114,24 +110,25 @@ def store_solution(solution):
     if not os.path.exists(solution_dir):
         os.makedirs(solution_dir)
 
-        description_file = open(solution_dir+'index.html', 'w')
+        description_file = open(solution_dir+'README.md', 'w')
         description_file.write(DESCRIPTION_TEMPLATE.substitute(solution))
         description_file.close
 
         test_file = open(solution_dir+'input.txt', 'w')
         test_file.write(solution['sampleTestCase'])
         test_file.close
+    else:
+        print('{}: folder exists'.format(slug))
 
     filename = solution_dir + 'solution-{}.{}'.format(solution['id'],
-                                       EXTENSIONS[solution['lang']])
+                                                      EXTENSIONS[solution['lang']])
     if not os.path.exists(filename):
         print('{}: writing solution #{}'.format(slug, solution['id'],))
         solution_file = open(filename, 'w')
         solution_file.write(solution['code'])
         solution_file.close
     else:
-        print('{}: skipping solution #{} - already exists'.format(slug, solution['id'],))
-
+        print('{}: solution #{} already exists'.format(slug, solution['id'],))
 
 
 submissions = chain.from_iterable(get_submissions())
