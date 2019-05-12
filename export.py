@@ -9,7 +9,7 @@ from string import Template
 # Store the value of you cookies in 'cookies.txt'
 COOKIES = open('cookies.txt', 'r').read().strip().replace('cookie: ', '', 1)
 # Change output dir if you like
-LEETCODE_DIR = 'leetcode-solutions'
+LEETCODE_DIR = '../leetcode-solutions'
 SUBMISSIONS_URL = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
 GRAPHQL_URL = 'https://leetcode.com/graphql'
 THROTTLE_SECONDS = 1
@@ -122,11 +122,11 @@ def store_solution(solution):
         test_file.write(solution['sampleTestCase'])
         test_file.close
 
-    filename = 'solution-{}.{}'.format(solution['id'],
+    filename = solution_dir + 'solution-{}.{}'.format(solution['id'],
                                        EXTENSIONS[solution['lang']])
     if not os.path.exists(filename):
         print('{}: writing solution #{}'.format(slug, solution['id'],))
-        solution_file = open(solution_dir+filename, 'w')
+        solution_file = open(filename, 'w')
         solution_file.write(solution['code'])
         solution_file.close
     else:
