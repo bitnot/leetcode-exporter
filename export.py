@@ -71,6 +71,7 @@ def get_submissions(batch_size=20):
     """Gets all submissions in `batch_size` chunks"""
     offset = 0
     while True:
+        print("getting batch #{}".format(offset + 1))
         response = requests.get(SUBMISSIONS_URL.format(
             offset, batch_size), headers={'Cookie': COOKIES})
         json_response = response.json()
