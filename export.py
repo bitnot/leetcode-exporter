@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from itertools import chain, islice
 import os
 import re
