@@ -7,7 +7,7 @@ from string import Template
 
 
 # Store the value of you cookies in 'cookies.txt'
-COOKIES = open('cookies.txt', 'r').read()
+COOKIES = open('cookies.txt', 'r').read().strip().replace('cookie: ', '', 1)
 # Change output dir if you like
 LEETCODE_DIR = 'leetcode-solutions'
 SUBMISSIONS_URL = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
