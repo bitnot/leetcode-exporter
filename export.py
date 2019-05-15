@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-from itertools import chain, islice
+from itertools import chain, islice, takewhile
 import os
 import re
 import requests
-from time import sleep
+from time import sleep, time
 from string import Template
-
 
 # Store the value of you cookies in 'cookies.txt'
 COOKIES = open('cookies.txt', 'r').read().strip().replace('cookie: ', '', 1)
 # Change output dir if you like
 LEETCODE_DIR = '../leetcode-solutions'
+# Change how many days to look back
+DAYS_TO_IMPORT=365*100
 SUBMISSIONS_URL = 'https://leetcode.com/api/submissions/?offset={}&limit={}'
 PROBLEM_URL = 'https://leetcode.com/problems/{}/'
 GRAPHQL_URL = 'https://leetcode.com/graphql'
@@ -46,6 +47,7 @@ ${difficulty}: ${title}
 ${content}
 """)
 
+IMPORT_SINCE = int(time()) - (DAYS_TO_IMPORT * 24 * 60 * 60)
 
 def question_data(slug):
     return {
@@ -86,19 +88,22 @@ def get_submissions(batch_size=20):
         sleep(THROTTLE_SECONDS)
 
 
-def add_description(submission_json):
-    title = submission_json['title']
+def add_description(submission):
+    title = submission['title']
     slug = title_to_slug(title)
     print('{}: getting description'.format(slug))
     response = requests.post(GRAPHQL_URL, json=question_data(
         slug), headers={'Cookie': COOKIES})
     json_response = response.json()
     problem_url = PROBLEM_URL.format(slug)
-    return {**submission_json, **json_response['data']['question'], 'slug': slug, 'problem_url': problem_url}
+    return {**submission, **json_response['data']['question'], 'slug': slug, 'problem_url': problem_url}
 
 
-def is_accepted(submission_json):
-    return 'status_display' in submission_json and submission_json['status_display'] == 'Accepted'
+def is_accepted(submission):
+    return 'status_display' in submission and submission['status_display'] == 'Accepted'
+
+def is_recent(submission):
+    return 'timestamp' in submission and submission['timestamp'] >= IMPORT_SINCE
 
 
 def title_to_slug(title):
@@ -134,7 +139,8 @@ def store_solution(solution):
 
 
 submissions = chain.from_iterable(get_submissions())
-accepted_submissions = filter(is_accepted, submissions)
+recent_submissions = takewhile(is_recent, submissions)
+accepted_submissions = filter(is_accepted, recent_submissions)
 accepted_submissions_details = map(add_description, accepted_submissions)
 for solution in accepted_submissions_details:
     store_solution(solution)
