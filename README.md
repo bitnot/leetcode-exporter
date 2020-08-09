@@ -7,7 +7,10 @@ In order to authenticate the script, log into your account in browser, copy the 
 
 You will need Python 3 to run the script.
 
-`python3 ./export.py`
+```
+pip3 install -r requirements.txt
+python3 ./export.py
+```
 
 
 Make sure to read [LeetCode Terms of Service](https://leetcode.com/terms/) if you decide to publish your solutions.
