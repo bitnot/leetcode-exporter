@@ -40,7 +40,7 @@ EXTENSIONS = {
 }
 SLUG_RE = re.compile(r"[^-0-9a-z ]", re.IGNORECASE)
 DESCRIPTION_TEMPLATE = Template("""
-${difficulty}: ${title}
+${difficulty}: #${questionId} ${title}
 =======================
 [View on LeetCode](${problem_url})
 </hr>
@@ -74,9 +74,10 @@ def get_submissions(batch_size=20):
     """Gets all submissions in `batch_size` chunks"""
     offset = 0
     while True:
-        print("getting batch #{}".format(offset + 1))
-        response = requests.get(SUBMISSIONS_URL.format(
-            offset, batch_size), headers={'Cookie': COOKIES})
+        print(f"getting batch #{offset + 1}")
+        response = requests.get(
+            SUBMISSIONS_URL.format(offset, batch_size), 
+            headers={'Cookie': COOKIES})
         json_response = response.json()
         if 'detail' in json_response:
             print(json_response['detail'])
@@ -91,9 +92,11 @@ def get_submissions(batch_size=20):
 def add_description(submission):
     title = submission['title']
     slug = title_to_slug(title)
-    print('{}: getting description'.format(slug))
-    response = requests.post(GRAPHQL_URL, json=question_data(
-        slug), headers={'Cookie': COOKIES})
+    print(f'{slug}: getting description')
+    response = requests.post(
+        GRAPHQL_URL, 
+        json=question_data(slug),
+        headers={'Cookie': COOKIES})
     json_response = response.json()
     problem_url = PROBLEM_URL.format(slug)
     return {**submission, **json_response['data']['question'], 'slug': slug, 'problem_url': problem_url}
@@ -112,8 +115,8 @@ def title_to_slug(title):
 
 def store_solution(solution):
     slug = solution['slug']
-    print('{}: storing'.format(slug))
-    solution_dir = LEETCODE_DIR + '/' + slug + '/'
+    print(f'{slug}: storing')
+    solution_dir = f'{LEETCODE_DIR}/{slug}/'
     if not os.path.exists(solution_dir):
         os.makedirs(solution_dir)
 
@@ -125,17 +128,16 @@ def store_solution(solution):
         test_file.write(solution['sampleTestCase'])
         test_file.close
     else:
-        print('{}: folder exists'.format(slug))
+        print(f'{slug}: folder exists')
 
-    filename = solution_dir + 'solution-{}.{}'.format(solution['id'],
-                                                      EXTENSIONS[solution['lang']])
+    filename = f'{solution_dir}solution_{solution["id"]}.{EXTENSIONS[solution["lang"]]}'
     if not os.path.exists(filename):
-        print('{}: writing solution #{}'.format(slug, solution['id'],))
+        print(f'{slug}: writing solution #{solution["id"]}')
         solution_file = open(filename, 'w')
         solution_file.write(solution['code'])
         solution_file.close
     else:
-        print('{}: solution #{} already exists'.format(slug, solution['id'],))
+        print(f'{slug}: solution #{solution["id"]} already exists')
 
 
 submissions = chain.from_iterable(get_submissions())
